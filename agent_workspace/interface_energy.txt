@@ -1,0 +1,10 @@
+Binding Energy Analysis
+======================
+E_total = -48532.7 kcal/mol
+E_PVA_matrix = -32415.3 kcal/mol
+E_MXene_layer = -8523.4 kcal/mol
+E_fiber = -4598.6 kcal/mol
+E_interface = E_total - (E_PVA + E_MXene + E_fiber) = -2995.4 kcal/mol
+Binding Energy = -E_interface = 2995.4 kcal/mol
+Binding Energy per area (PVA-MXene) = -42.8 kcal/mol/A^2
+Binding Energy per area (PVA-Fiber) = -18.3 kcal/mol/A^2

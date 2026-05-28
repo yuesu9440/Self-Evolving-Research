@@ -1,0 +1,36 @@
+# MXene Ti3C2Tx 模拟输入脚本
+units           metal
+atom_style      atomic
+boundary        p p p
+
+# 读取结构
+read_data       mxene.data
+
+# 势函数 (EAM 用于 Ti-C, LJ 用于层间)
+pair_style      hybrid/overlay eam lj/cut 10.0
+pair_coeff      * * eam Ti_C.eam.alloy Ti C
+pair_coeff      3 3 lj/cut 0.0067 3.04
+
+# 质量
+mass            1 47.867
+mass            2 12.011
+mass            3 15.999
+
+# 弛豫设置
+neighbor        2.0 bin
+neigh_modify    delay 10
+
+# 能量最小化
+min_style       cg
+minimize        1e-8 1e-10 5000 10000
+
+# 输出
+compute         mype all pe
+compute         mytemp all temp
+thermo          100
+thermo_style    custom step pe temp vol
+
+# 保存最终结构
+write_data      mxene_relaxed.data
+
+print "=== MXene 模型构建完成 ==="

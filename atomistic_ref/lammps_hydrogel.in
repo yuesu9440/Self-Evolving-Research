@@ -1,0 +1,45 @@
+# ====================================================================
+# LAMMPS 模板：复合水凝胶系统（PVA-MXene 或 CS-CMC）单轴拉伸模拟
+# ====================================================================
+
+units           real       # 能量: kcal/mol, 距离: Å, 时间: fs
+atom_style      full       # 全原子模型（包含电荷和分子拓扑拓扑连接）
+boundary        p p p       # 三维周期性边界
+
+# 1. 读取复杂的网络结构 (需使用 AmberTools, Packmol 或 MedeA 预先构建)
+read_data       hydrogel_system.data
+
+# 2. 力场参数设置 (以广泛使用的 OPLS-AA 为例)
+pair_style      lj/cut/coul/long 10.0 12.0
+bond_style      harmonic
+angle_style     harmonic
+dihedral_style  opls
+improper_style  cvff
+kspace_style    pppm 1.0e-4
+
+# 3. 初始松弛与平衡化 (300 K)
+velocity        all create 300.0 892745 dist gaussian
+fix             1 all npt temp 300.0 300.0 100.0 iso 1.0 1.0 1000.0
+
+thermo          1000
+thermo_style    custom step temp press vol density pe linesize 8
+run             50000      # 先运行 50 ps 进行松弛
+unfix           1
+
+# 4. 切换到 NVT 系综准备进行拉伸
+fix             2 all nvt temp 300.0 300.0 100.0
+
+# 5. 定义单轴拉伸 (沿 Z 轴以恒定应变率拉伸)
+# 应变率 = 1e-5 /fs (即 10^10 /s，高分子 MD 拉伸标准速率)
+fix             3 all deform 1 z erate 0.00001 remap v
+
+# 6. 计算应力 (使用压力张量)
+variable        strain equal "(lz - v_lz0) / v_lz0"
+variable        stress_z equal "-pzz * 0.101325" # 将大气压单位转换为 MPa
+
+# 每 1000 步输出一次应力应变到文件
+fix             output_stress all print 1000 "${strain} ${stress_z}" file stress_strain_output.txt screen no
+
+# 7. 运行拉伸模拟
+dump            1 all custom 5000 trajectory.lammpstrj id type q x y z
+run             200000     # 运行较长步数以观察断裂
